@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mundo Mais | Crédito</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="logo-container" style="margin-bottom: 0;">
+            <div class="logo-text">mundo</div>
+            <div class="logo-plus">+</div>
+        </div>
+        <div class="header-status">
+            <div class="status-dot"></div>
+            Real-time Credit Assessment Active
+        </div>
+    </header>
+
+    <div class="background-container">
+        <div id="canvas-container"></div>
+    </div>
+
+    <div class="glass-card" style="max-width: 1200px; width: 95%; display: grid; grid-template-columns: 280px 1fr; gap: 2rem; text-align: left; align-items: start; padding: 2rem; margin: 8rem 0 4rem 0;">
+        <!-- SIDEBAR (LEFT) -->
+        <aside style="border-right: 1px solid var(--glass-border); padding-right: 2rem; height: 100%; display: flex; flex-direction: column; gap: 2rem;">
+            <!-- Perfil do Corretor -->
+            <div style="text-align: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 1.5rem;">
+                <div style="width: 60px; height: 60px; border-radius: 50%; border: 2px solid var(--primary); margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; background: rgba(0, 255, 136, 0.1); color: var(--primary); font-size: 1.5rem; font-weight: 800;">CJ</div>
+                <h3 style="font-size: 1.1rem; color: #fff; margin-bottom: 0.2rem;">Corretor João</h3>
+                <p style="font-size: 0.65rem; color: var(--primary); font-weight: 700; text-transform: uppercase;">Gestor de Vendas</p>
+                <div style="margin-top: 0.8rem;">
+                    <div id="statsCount" style="font-size: 1.2rem; font-weight: 800; color: #fff;">0</div>
+                    <div style="font-size: 0.5rem; color: var(--text-dim); text-transform: uppercase;">Ações Realizadas</div>
+                </div>
+            </div>
+
+            <!-- Histórico Lateral -->
+            <div style="flex-grow: 1;">
+                <h4 style="font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 1rem; letter-spacing: 1px;">Últimos Atendimentos</h4>
+                <div id="historyList" style="display: flex; flex-direction: column; gap: 0.8rem; max-height: 250px; overflow-y: auto; padding-right: 0.5rem;"></div>
+                
+                <div style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                    <button onclick="window.location.href='notes.html'" style="background: rgba(0, 255, 136, 0.1); color: var(--primary); border: 1px solid var(--primary); padding: 0.6rem; border-radius: 6px; cursor: pointer; font-size: 0.7rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">📝 Anotações de Clientes</button>
+                    <button onclick="window.location.href='history.html'" style="background: transparent; color: #fff; border: 1px solid var(--glass-border); padding: 0.5rem; border-radius: 6px; cursor: pointer; font-size: 0.65rem; font-weight: 600;">Ver Todos Registros</button>
+                    <button id="clearHistoryBtn" style="background: rgba(255, 68, 68, 0.05); color: #ff4444; border: 1px solid rgba(255, 68, 68, 0.1); padding: 0.5rem; border-radius: 6px; cursor: pointer; font-size: 0.65rem;">🗑 Limpar Histórico</button>
+                </div>
+            </div>
+
+            <div>
+                <button onclick="window.location.href='index.html'" style="background: transparent; color: var(--text-dim); border: none; cursor: pointer; text-decoration: underline; font-size: 0.75rem; opacity: 0.7;">Sair do Sistema</button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT (RIGHT) -->
+        <main style="display: flex; flex-direction: column; gap: 2rem;">
+            <div>
+                <div class="logo-container" style="justify-content: flex-start; margin-bottom: 0.5rem;">
+                    <div class="logo-text">mundo</div>
+                    <div class="logo-plus">+</div>
+                </div>
+                <h2 class="neon-text" style="font-size: 1.8rem; color: #fff;">SISTEMA DE GESTÃO</h2>
+                
+                <div class="form-group" style="margin-top: 1.5rem;">
+                    <label for="cpf">CPF do Cliente</label>
+                    <div style="display: flex; gap: 1rem;">
+                        <input type="text" id="cpf" placeholder="000.000.000-00" maxlength="14" style="text-align: center; letter-spacing: 2px;">
+                        <button id="consultBtn" class="btn" style="width: 180px;">Validar Perfil</button>
+                    </div>
+                </div>
+
+                <div id="loading" class="loading-spinner"></div>
+                
+                <div id="results" class="results" style="margin-top: 1rem; padding: 2rem; border-radius: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <div>
+                            <h3 style="color: var(--primary); margin:0; font-size: 1.3rem;">DETALHES DA ANÁLISE</h3>
+                            <p id="clientName" style="color: #fff; font-weight: 600; font-size: 1.1rem; margin-top: 0.2rem;"></p>
+                        </div>
+                        <div id="statusBadge" style="padding: 0.5rem 1.2rem; border-radius: 8px; font-weight: 800; font-size: 0.8rem;"></div>
+                    </div>
+
+                    <!-- Definição de Status de Venda -->
+                    <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid var(--glass-border);">
+                        <span style="font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase;">Estado da Negociação:</span>
+                        <div style="display: flex; gap: 0.5rem; margin-top: 0.8rem;">
+                            <button class="status-btn" data-status="Em processo" style="flex: 1; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: #fff; cursor: pointer; font-size: 0.7rem; font-weight: 600;">Em Processo</button>
+                            <button class="status-btn" data-status="Quase fechando" style="flex: 1; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: #fff; cursor: pointer; font-size: 0.7rem; font-weight: 600;">Quase Fechando</button>
+                            <button class="status-btn" data-status="Negocio fechado" style="flex: 1; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: #fff; cursor: pointer; font-size: 0.7rem; font-weight: 600;">Negócio Fechado</button>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                        <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px;">
+                            <span style="color: var(--text-dim); font-size: 0.6rem; text-transform: uppercase;">Score Atual</span>
+                            <div id="scoreValue" style="font-size: 1.8rem; font-weight: 800; margin: 0.3rem 0;"></div>
+                            <div style="width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;">
+                                <div id="scoreBar" style="height: 100%; width: 0%; transition: width 1.5s ease-in-out;"></div>
+                            </div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px;">
+                            <span style="color: var(--text-dim); font-size: 0.6rem; text-transform: uppercase;">Crédito Disponível</span>
+                            <div style="font-weight: 800; font-size: 1.5rem; margin-top: 0.3rem;" class="neon-text" id="creditValue"></div>
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--glass-border); padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem;">
+                        <h4 style="font-size: 0.7rem; color: var(--primary); margin-bottom: 0.8rem; text-transform: uppercase;">Anotações Atuais</h4>
+                        <textarea id="notesArea" placeholder="Anote as necessidades do cliente..." style="width: 100%; height: 80px; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: 8px; color: #fff; padding: 0.8rem; font-size: 0.8rem; resize: none; margin-bottom: 0.8rem;"></textarea>
+                        <button id="saveNotesBtn" style="width: 100%; background: var(--primary); color: #000; border: none; padding: 0.6rem; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.8rem;">Salvar Anotação e Sincronizar</button>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;" id="secondaryResults">
+                        <div style="background: rgba(255, 68, 68, 0.05); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255, 68, 68, 0.1);">
+                            <h4 style="font-size: 0.6rem; color: #ff4444; margin-bottom: 0.2rem; text-transform: uppercase;">Restrições</h4>
+                            <div id="restrictionsList" style="font-size: 0.9rem; font-weight: 600; color: #fff;"></div>
+                        </div>
+                        <div style="background: rgba(0, 255, 136, 0.05); padding: 1rem; border-radius: 12px; border: 1px solid var(--glass-border);">
+                            <h4 style="font-size: 0.6rem; color: var(--primary); margin-bottom: 0.2rem; text-transform: uppercase;">Taxa Referencial</h4>
+                            <div id="interestRate" style="font-size: 1rem; font-weight: 800; color: #fff;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Simulação Financeira -->
+                <div class="glass-card" style="width: 100%; padding: 2rem; border-radius: 20px; margin-top: 1rem; background: rgba(0,0,0,0.3);">
+                    <h3 style="color: var(--primary); margin-bottom: 2rem; font-size: 1.3rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem; text-align: center;">🏦 SIMULADOR DE FINANCIAMENTO MUNDO+</h3>
+                    
+                    <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+                        <!-- Coluna Form (Esquerda) -->
+                        <div style="flex: 1.2; min-width: 300px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                                <div class="form-group">
+                                    <label style="font-size: 0.6rem;">RENDA MENSAL (R$)</label>
+                                    <input type="text" id="monthlyIncome" placeholder="Ex: 5.000,00" style="font-size: 0.8rem; padding: 0.6rem;">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-size: 0.6rem;">ENTRADA (R$)</label>
+                                    <input type="text" id="entryValue" placeholder="Ex: 50.000,00" style="font-size: 0.8rem; padding: 0.6rem;">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-size: 0.6rem;">VALOR IMÓVEL (R$)</label>
+                                    <input type="text" id="propertyValue" placeholder="Ex: 300.000,00" style="font-size: 0.8rem; padding: 0.6rem;">
+                                </div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                                <div class="form-group">
+                                    <label style="font-size: 0.6rem;">PAGAMENTO MENSAL DESEJADO (R$)</label>
+                                    <input type="text" id="targetPayment" placeholder="Quanto o cliente pretende investir por mês?" style="font-size: 0.8rem; padding: 0.6rem;">
+                                </div>
+                            </div>
+
+                            <!-- Configurações de Juros -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 10px; border: 1px dashed var(--glass-border);">
+                                <div class="form-group">
+                                    <label style="font-size: 0.6rem; color: var(--primary);">TAXA DE JUROS ANUAL (% A.A.)</label>
+                                    <input type="number" id="configAnnualRate" value="9.5" step="0.01" style="font-size: 0.8rem; padding: 0.6rem; border-color: var(--primary);">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-size: 0.6rem; color: var(--primary);">TAXA DE JUROS MENSAL (% A.M.)</label>
+                                    <input type="number" id="configMonthlyRate" value="0.76" step="0.0001" style="font-size: 0.8rem; padding: 0.6rem; border-color: var(--primary);">
+                                </div>
+                            </div>
+
+                            <button id="simulateBtn" class="btn" style="width: 100%; height: 60px; background: var(--primary); color: #000; font-weight: 800; letter-spacing: 1px; font-size: 1rem;">CALCULAR VIABILIDADE TÉCNICA</button>
+                        </div>
+
+                        <!-- Coluna Resultado (Direita) -->
+                        <div id="simulationResult" style="flex: 0.8; min-width: 280px; display: none;">
+                            <div style="background: rgba(0,255,136,0.05); padding: 2rem; border-radius: 15px; border: 1px solid var(--primary); height: 100%; display: flex; flex-direction: column; justify-content: center;">
+                                <div style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 2rem;">
+                                    <h4 style="color: #fff; font-size: 1rem; margin-bottom: 1rem;">Proposta Mundo+</h4>
+                                    <span style="color: var(--primary); font-weight: 800; font-size: 0.8rem; border: 1px solid var(--primary); padding: 5px 15px; border-radius: 5px; text-transform: uppercase;" id="simStatus"></span>
+                                </div>
+
+                                <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
+                                    <div style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.8rem;">
+                                        <span style="font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase;">Prazo Estimado</span>
+                                        <div id="calcTenure" style="font-weight: 800; color: #fff; font-size: 1.4rem;"></div>
+                                    </div>
+                                    <div style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.8rem;">
+                                        <span style="font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase;">Parcela Mensal</span>
+                                        <div id="monthlyInstallment" style="font-weight: 800; color: var(--primary); font-size: 1.8rem;"></div>
+                                    </div>
+                                    <div>
+                                        <span style="font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase;">Crédito Financiado</span>
+                                        <div id="financedAmount" style="font-weight: 800; color: #fff; font-size: 1.2rem;"></div>
+                                    </div>
+                                    <div style="margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
+                                        <span style="font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase;">Simulações Alternativas</span>
+                                        <div id="alternativesList" style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.8rem;">
+                                            <!-- Alternatives injected here -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mundo Mais | Anotações de Clientes</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="logo-container" style="margin-bottom: 0;">
+            <div class="logo-text">mundo</div>
+            <div class="logo-plus">+</div>
+        </div>
+        <div class="header-status">
+            📝 Gestão de Anotações
+        </div>
+    </header>
+
+    <div class="background-container">
+        <div id="canvas-container"></div>
+    </div>
+
+    <div class="glass-card" style="max-width: 1000px; width: 95%; text-align: left;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <div>
+                <h2 class="neon-text" style="font-size: 1.8rem;">Anotações de Clientes</h2>
+                <p style="color: var(--text-dim); font-size: 0.75rem; text-transform: uppercase;">Mural de Notas do Corretor João</p>
+            </div>
+            <button onclick="window.location.href='dashboard.html'" class="btn" style="width: auto; padding: 0.8rem 1.5rem; font-size: 0.8rem;">Voltar ao Painel</button>
+        </div>
+
+        <div id="notesContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+            <!-- Notes will be injected here -->
+        </div>
+
+        <div id="noNotesMessage" style="padding: 3rem; text-align: center; color: var(--text-dim); display: none;">
+            Não há anotações salvas para exibir.
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Dedicated small script for the notes page to handle dynamic layout
+        document.addEventListener('DOMContentLoaded', () => {
+            const history = JSON.parse(localStorage.getItem('mundo_history')) || [];
+            const container = document.getElementById('notesContainer');
+            const emptyMsg = document.getElementById('noNotesMessage');
+            
+            const itemsWithNotes = history.filter(h => h.notes && h.notes.trim() !== '');
+
+            if (itemsWithNotes.length === 0) {
+                emptyMsg.style.display = 'block';
+            } else {
+                itemsWithNotes.forEach(h => {
+                    const card = document.createElement('div');
+                    card.style.background = 'rgba(255, 255, 255, 0.03)';
+                    card.style.border = '1px solid var(--glass-border)';
+                    card.style.padding = '1.5rem';
+                    card.style.borderRadius = '15px';
+                    card.style.position = 'relative';
+                    
+                    const statusColor = h.status === 'APROVADO' ? '#00ff88' : (h.status === 'NEGADO' ? '#ff4444' : '#ffa500');
+                    
+                    card.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                            <div>
+                                <h3 style="color: var(--primary); font-size: 1rem; margin: 0;">${h.name}</h3>
+                                <p style="color: var(--text-dim); font-size: 0.65rem; margin: 2px 0;">${h.cpf}</p>
+                            </div>
+                            <span style="font-size: 0.6rem; color: ${statusColor}; font-weight: 800; border: 1px solid ${statusColor}; padding: 2px 6px; border-radius: 4px;">${h.vendaStatus || 'EM PROCESSO'}</span>
+                        </div>
+                        <p style="color: #fff; font-size: 0.8rem; line-height: 1.5; font-style: italic;">"${h.notes}"</p>
+                        <div style="margin-top: 1rem; text-align: right; font-size: 0.6rem; color: var(--text-dim);">
+                            Data: ${h.date}
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            }
+
+            // 3D Globe for background
+            const canCont = document.getElementById('canvas-container');
+            if (canCont) {
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                canCont.appendChild(renderer.domElement);
+                const globe = new THREE.Mesh(new THREE.SphereGeometry(5, 32, 32), new THREE.MeshBasicMaterial({ color: 0x00ff88, wireframe: true, transparent: true, opacity: 0.05 }));
+                scene.add(globe);
+                camera.position.z = 10;
+                function ani() { requestAnimationFrame(ani); globe.rotation.y += 0.001; renderer.render(scene, camera); }
+                ani();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+/* Reusable UI Components */
+
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: 2.5rem;
+    box-shadow: var(--shadow-premium);
+}
+
+/* Buttons */
+.btn-primary {
+    background: var(--primary);
+    color: var(--bg-dark);
+    padding: 0.8rem 1.8rem;
+    border-radius: 14px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(0, 255, 136, 0.2);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 255, 136, 0.4);
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1.5px solid var(--glass-border);
+    color: var(--text-main);
+    padding: 0.8rem 1.8rem;
+    border-radius: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition:all 0.3s;
+}
+
+.btn-outline:hover {
+    border-color: var(--text-dim);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Form Elements */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.field label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.field input, .field select {
+    background: var(--surface-light);
+    border: 1.5px solid var(--glass-border);
+    padding: 1rem 1.2rem;
+    border-radius: 12px;
+    color: white;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.3s;
+}
+
+.field input:focus {
+    border-color: var(--primary);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* Stepper UI */
+.stepper {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 3.5rem;
+    position: relative;
+    padding: 0 1rem;
+}
+
+.step {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    position: relative;
+    z-index: 2;
+    background: var(--bg-dark);
+    padding: 0 1rem;
+}
+
+.step.active {
+    color: var(--primary);
+}
+
+/* Feedback Status Masks */
+.status-badge {
+    padding: 0.4rem 1rem;
+    border-radius: 50px;
+    font-weight: 800;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+}
+
+.status-approved { background: rgba(0, 255, 136, 0.1); color: var(--success); }
+.status-warning { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+.status-rejected { background: rgba(239, 68, 68, 0.1); color: var(--danger); }

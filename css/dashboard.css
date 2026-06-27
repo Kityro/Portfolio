@@ -1,0 +1,99 @@
+/* Dashboard Panels and Grid */
+
+.dashboard-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+/* Summary Cards */
+.sum-card {
+    background: var(--surface);
+    padding: 1.8rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--glass-border);
+    transition: transform 0.3s;
+}
+
+.sum-card:hover {
+    transform: translateY(-5px);
+}
+
+.sum-card .label {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    font-weight: 700;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.sum-card .value {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--text-main);
+}
+
+.sum-card.highlight .value {
+    color: var(--primary);
+}
+
+/* Charts Grid */
+.charts-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.chart-box {
+    background: var(--surface);
+    padding: 2rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--glass-border);
+}
+
+.chart-box h3 {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+    color: var(--text-dim);
+}
+
+/* Approval Status Section */
+.status-section {
+    grid-column: span 4;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.02);
+    padding: 2rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--glass-border);
+}
+
+.status-info h2 {
+    font-size: 2rem;
+    font-weight: 800;
+}
+
+.status-indicator {
+    padding: 1rem 3rem;
+    border-radius: 120px;
+    font-weight: 900;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+}
+
+/* Progress Gauge Container */
+.gauge-container {
+    width: 250px;
+    height: 250px;
+    margin: 0 auto;
+}
+
+@media (max-width: 1200px) {
+    .dashboard-container { grid-template-columns: repeat(2, 1fr); }
+    .charts-grid { grid-template-columns: 1fr; }
+}

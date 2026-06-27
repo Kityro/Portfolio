@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mundo Mais | Histórico de Consultas</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="logo-container" style="margin-bottom: 0;">
+            <div class="logo-text">mundo</div>
+            <div class="logo-plus">+</div>
+        </div>
+        <div class="header-status">
+            <div class="status-dot"></div>
+            Base de Dados Histórica
+        </div>
+    </header>
+
+    <div class="background-container">
+        <div id="canvas-container"></div>
+    </div>
+
+    <div class="glass-card" style="max-width: 1000px; width: 95%; text-align: left;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <div>
+                <h2 class="neon-text" style="font-size: 1.8rem;">Histórico de Consultas</h2>
+                <p style="color: var(--text-dim); font-size: 0.75rem; text-transform: uppercase;">Registros de Análise Imobiliária</p>
+            </div>
+            <button onclick="window.location.href='dashboard.html'" class="btn" style="width: auto; padding: 0.8rem 1.5rem; font-size: 0.8rem;">Nova Consulta</button>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                <thead>
+                    <tr style="border-bottom: 1px solid var(--glass-border); color: var(--text-dim);">
+                        <th style="padding: 1rem; text-align: left;">DATA</th>
+                        <th style="padding: 1rem; text-align: left;">NOME DO CLIENTE</th>
+                        <th style="padding: 1rem; text-align: left;">CPF</th>
+                        <th style="padding: 1rem; text-align: left;">SCORE</th>
+                        <th style="padding: 1rem; text-align: left;">STATUS</th>
+                    </tr>
+                </thead>
+                <tbody id="fullHistoryTable">
+                    <!-- History rows will be injected here -->
+                </tbody>
+            </table>
+        </div>
+
+        <div id="emptyMessage" style="padding: 3rem; text-align: center; color: var(--text-dim); display: none;">
+            Nenhum registro encontrado no banco de dados local.
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

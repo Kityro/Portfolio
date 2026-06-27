@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mundo Mais | Login</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <div class="logo-text">mundo</div>
+            <div class="logo-plus">+</div>
+        </div>
+        <div class="header-status">
+            <div class="status-dot"></div>
+            Sistema de Crédito Operacional
+        </div>
+    </header>
+
+    <div class="background-container">
+        <div id="canvas-container"></div>
+    </div>
+
+    <main style="min-height: 100vh; display: flex; align-items: center; justify-content: center; width: 100%;">
+        <div class="glass-card" style="width: 90%; max-width: 440px; padding: 3rem; text-align: center;">
+            <div class="logo-container" style="justify-content: center; margin-bottom: 1rem;">
+                <div class="logo-text">mundo</div>
+                <div class="logo-plus">+</div>
+            </div>
+            <h1 class="neon-text" style="font-size: 1.5rem; margin-bottom: 0.5rem; color: #fff; text-shadow: none;">CORRETAGEM DIGITAL</h1>
+            <p style="color: var(--text-dim); margin-bottom: 2.5rem; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; font-size: 0.7rem;">Acesso Administrativo ao HUB de Crédito</p>
+
+            <form id="loginForm">
+                <div class="form-group" style="text-align: left; margin-bottom: 1.5rem;">
+                    <label for="username" style="font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 0.5rem; display: block;">Identificação do Operador</label>
+                    <input type="text" id="username" placeholder="Digite seu ID" required style="width:100%; padding:1rem; border-radius:12px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:#fff; outline:none;">
+                </div>
+                <div class="form-group" style="text-align: left; margin-bottom: 2rem;">
+                    <label for="password" style="font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 0.5rem; display: block;">Chave de Segurança</label>
+                    <input type="password" id="password" placeholder="••••••••" required style="width:100%; padding:1rem; border-radius:12px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:#fff; outline:none;">
+                </div>
+                <button type="submit" class="btn" style="width: 100%; height: 3.5rem; background: var(--primary); color: #000; border: none; border-radius: 12px; font-weight: 800; cursor: pointer;">Autenticar Acesso</button>
+                <p id="errorMessage" style="color: #ff4444; font-size: 0.8rem; margin-top: 1.5rem; display: none; font-weight: 600;">⚠️ Falha na autenticação. Verifique suas credenciais.</p>
+            </form>
+
+            <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--glass-border); font-size: 0.7rem; color: var(--text-dim);">
+                SISTEMA PROTEGIDO POR PROTOCOLO DE TRANSMISSÃO CRIPTOGRAFADA
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // Lógica de Login Simples
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            
+            // Simulação de login
+            if(user === 'admin' && pass === '1234') {
+                window.location.href = 'dashboard.html';
+            } else {
+                document.getElementById('errorMessage').style.display = 'block';
+            }
+        });
+
+        // Background Planet Logic (Three.js)
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        const geometry = new THREE.SphereGeometry(5, 64, 64);
+        const material = new THREE.MeshPhongMaterial({
+            color: 0x00ff88,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.2
+        });
+        const sphere = new THREE.Mesh(geometry, material);
+        scene.add(sphere);
+
+        const light = new THREE.PointLight(0xffffff, 1, 100);
+        light.position.set(10, 10, 10);
+        scene.add(light);
+
+        camera.position.z = 15;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            sphere.rotation.y += 0.002;
+            sphere.rotation.x += 0.001;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
