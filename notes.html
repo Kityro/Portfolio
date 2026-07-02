@@ -43,41 +43,83 @@
     <script>
         // Dedicated small script for the notes page to handle dynamic layout
         document.addEventListener('DOMContentLoaded', () => {
-            const history = JSON.parse(localStorage.getItem('mundo_history')) || [];
             const container = document.getElementById('notesContainer');
             const emptyMsg = document.getElementById('noNotesMessage');
             
-            const itemsWithNotes = history.filter(h => h.notes && h.notes.trim() !== '');
+            fetch('/history')
+            .then(res => res.json())
+            .then(history => {
+                const itemsWithNotes = history.filter(h => h.notes && h.notes.trim() !== '');
 
-            if (itemsWithNotes.length === 0) {
-                emptyMsg.style.display = 'block';
-            } else {
-                itemsWithNotes.forEach(h => {
-                    const card = document.createElement('div');
-                    card.style.background = 'rgba(255, 255, 255, 0.03)';
-                    card.style.border = '1px solid var(--glass-border)';
-                    card.style.padding = '1.5rem';
-                    card.style.borderRadius = '15px';
-                    card.style.position = 'relative';
-                    
-                    const statusColor = h.status === 'APROVADO' ? '#00ff88' : (h.status === 'NEGADO' ? '#ff4444' : '#ffa500');
-                    
-                    card.innerHTML = `
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
-                            <div>
-                                <h3 style="color: var(--primary); font-size: 1rem; margin: 0;">${h.name}</h3>
-                                <p style="color: var(--text-dim); font-size: 0.65rem; margin: 2px 0;">${h.cpf}</p>
+                if (itemsWithNotes.length === 0) {
+                    emptyMsg.style.display = 'block';
+                } else {
+                    container.innerHTML = '';
+                    itemsWithNotes.forEach(h => {
+                        const card = document.createElement('div');
+                        card.style.background = 'rgba(255, 255, 255, 0.03)';
+                        card.style.border = '1px solid var(--glass-border)';
+                        card.style.padding = '1.5rem';
+                        card.style.borderRadius = '15px';
+                        card.style.position = 'relative';
+                        
+                        const statusColor = h.status === 'APROVADO' ? '#00ff88' : (h.status === 'NEGADO' ? '#ff4444' : '#ffa500');
+                        const cpfFormatted = h.cpf.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4');
+                        const dateStr = new Date(h.created_at || Date.now()).toLocaleDateString('pt-BR');
+                        const vStatus = h.venda_status !== undefined ? h.venda_status : h.vendaStatus;
+                        
+                        card.innerHTML = `
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                                <div>
+                                    <h3 style="color: var(--primary); font-size: 1rem; margin: 0;">${h.name}</h3>
+                                    <p style="color: var(--text-dim); font-size: 0.65rem; margin: 2px 0;">${cpfFormatted}</p>
+                                </div>
+                                <span style="font-size: 0.6rem; color: ${statusColor}; font-weight: 800; border: 1px solid ${statusColor}; padding: 2px 6px; border-radius: 4px;">${vStatus || 'EM PROCESSO'}</span>
                             </div>
-                            <span style="font-size: 0.6rem; color: ${statusColor}; font-weight: 800; border: 1px solid ${statusColor}; padding: 2px 6px; border-radius: 4px;">${h.vendaStatus || 'EM PROCESSO'}</span>
-                        </div>
-                        <p style="color: #fff; font-size: 0.8rem; line-height: 1.5; font-style: italic;">"${h.notes}"</p>
-                        <div style="margin-top: 1rem; text-align: right; font-size: 0.6rem; color: var(--text-dim);">
-                            Data: ${h.date}
-                        </div>
-                    `;
-                    container.appendChild(card);
-                });
-            }
+                            <p style="color: #fff; font-size: 0.8rem; line-height: 1.5; font-style: italic;">"${h.notes}"</p>
+                            <div style="margin-top: 1rem; text-align: right; font-size: 0.6rem; color: var(--text-dim);">
+                                Data: ${dateStr}
+                            </div>
+                        `;
+                        container.appendChild(card);
+                    });
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                // Fallback to localStorage
+                const history = JSON.parse(localStorage.getItem('mundo_history')) || [];
+                const itemsWithNotes = history.filter(h => h.notes && h.notes.trim() !== '');
+
+                if (itemsWithNotes.length === 0) {
+                    emptyMsg.style.display = 'block';
+                } else {
+                    container.innerHTML = '';
+                    itemsWithNotes.forEach(h => {
+                        const card = document.createElement('div');
+                        card.style.background = 'rgba(255, 255, 255, 0.03)';
+                        card.style.border = '1px solid var(--glass-border)';
+                        card.style.padding = '1.5rem';
+                        card.style.borderRadius = '15px';
+                        
+                        const statusColor = h.status === 'APROVADO' ? '#00ff88' : (h.status === 'NEGADO' ? '#ff4444' : '#ffa500');
+                        card.innerHTML = `
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                                <div>
+                                    <h3 style="color: var(--primary); font-size: 1rem; margin: 0;">${h.name}</h3>
+                                    <p style="color: var(--text-dim); font-size: 0.65rem; margin: 2px 0;">${h.cpf}</p>
+                                </div>
+                                <span style="font-size: 0.6rem; color: ${statusColor}; font-weight: 800; border: 1px solid ${statusColor}; padding: 2px 6px; border-radius: 4px;">${h.vendaStatus || 'EM PROCESSO'}</span>
+                            </div>
+                            <p style="color: #fff; font-size: 0.8rem; line-height: 1.5; font-style: italic;">"${h.notes}"</p>
+                            <div style="margin-top: 1rem; text-align: right; font-size: 0.6rem; color: var(--text-dim);">
+                                Data: ${h.date}
+                            </div>
+                        `;
+                        container.appendChild(card);
+                    });
+                }
+            });
 
             // 3D Globe for background
             const canCont = document.getElementById('canvas-container');

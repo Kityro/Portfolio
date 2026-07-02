@@ -1,0 +1,58 @@
+========================================================================
+COMO CONFIGURAR A CHAVE DA API (CPFhub) PARA DADOS REAIS
+========================================================================
+
+Para que o sistema "Mundo Mais" consulte dados reais de CPF (Nome completo e Data de Nascimento), você precisa configurar a chave de API do serviço CPFhub.
+
+Siga os passos abaixo, tanto para rodar localmente quanto para o ambiente de produção (GitHub/Nuvem).
+
+------------------------------------------------------------------------
+PASSO 1: OBTENÇÃO DA CHAVE DE API
+------------------------------------------------------------------------
+1. Acesse o site do CPFhub (https://cpfhub.io) ou o provedor da API de CPF correspondente.
+2. Registre-se e obtenha sua Chave de API única (API Key).
+
+------------------------------------------------------------------------
+PASSO 2: CONFIGURAÇÃO LOCAL (NO SEU COMPUTADOR)
+------------------------------------------------------------------------
+O projeto possui um arquivo chamado `.env.example` na raiz.
+Para configurar sua chave localmente:
+
+1. Duplique ou renomeie o arquivo `.env.example` para `.env` (na raiz do projeto).
+2. Abra o arquivo `.env` e substitua o valor existente pela sua chave. Ele deve ficar assim:
+   
+   CPFHUB_API_KEY=sua_chave_aqui_gerada_pelo_site
+
+3. O backend (`services.py`) lê automaticamente esse arquivo quando você inicia o servidor com `python main.py`.
+
+*Nota: O arquivo `.env` está configurado no `.gitignore` para NÃO ser enviado ao GitHub, garantindo que sua chave privada não seja vazada publicamente.*
+
+------------------------------------------------------------------------
+PASSO 3: CONFIGURAÇÃO EM PRODUÇÃO (RENDER / RAILWAY / ETC.)
+------------------------------------------------------------------------
+Como o arquivo `.env` não é enviado ao GitHub por motivos de segurança, ao hospedar seu projeto online (Render, Railway, Fly.io, etc.), você deve configurar a chave diretamente no painel da plataforma de hospedagem:
+
+1. Abra o painel do seu projeto no provedor de hospedagem.
+2. Vá na aba "Settings", "Environment Variables" (Variáveis de Ambiente) ou "Config Vars".
+3. Adicione uma nova variável:
+   - CHAVE (KEY): CPFHUB_API_KEY
+   - VALOR (VALUE): [Sua chave de API real]
+4. Salve as configurações. A plataforma irá reiniciar o servidor e passar a chave de forma segura para o código.
+
+------------------------------------------------------------------------
+COMO O CÓDIGO PROCESSA OS DADOS DO CPF
+------------------------------------------------------------------------
+Quando você faz uma consulta:
+1. Se a chave `CPFHUB_API_KEY` estiver configurada corretamentente, o sistema consome a URL:
+   `https://api.cpfhub.io/cpf/[CPF_DIGITADO]`
+
+2. Caso a API retorne os dados com sucesso, o sistema trará:
+   - Nome Completo real associado ao CPF.
+   - Data de Nascimento real associada ao CPF.
+
+3. O sistema calcula deterministicamente a pontuação de crédito (Score) baseada no CPF:
+   - Se o Score gerado for abaixo de 500, o nome constará automaticamente com "RESTRIÇÃO ATIVA" e o status de aprovação será "NEGADO".
+   - Se o Score gerado estiver entre 500 e 650, há uma pequena chance (simulação) de constar "RESTRIÇÃO ATIVA" e o status ficar como "EM ANÁLISE" ou "NEGADO".
+   - Se o Score for alto (acima de 750) e sem nenhuma restrição simulada, o status será "APROVADO", definindo o limite de crédito simulado de forma proporcional.
+
+4. Se a chave de API estiver inválida, vazia ou expirar, o backend não falha nem quebra: ele aciona automaticamente um modo de simulação determinística local, gerando nomes e datas de nascimento fictícios mas consistentes para testes.

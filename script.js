@@ -15,14 +15,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- SHARED DATA ---
-    let history = JSON.parse(localStorage.getItem('mundo_history')) || [];
-    let auditLog = JSON.parse(localStorage.getItem('mundo_audit_log')) || [];
-    let statsCount = parseInt(localStorage.getItem('mundo_stats')) || history.length;
+    let history = [];
+    let statsCount = 0;
     let currentViewingCpf = null;
 
     function saveState() {
         localStorage.setItem('mundo_history', JSON.stringify(history));
-        localStorage.setItem('mundo_audit_log', JSON.stringify(auditLog));
         localStorage.setItem('mundo_stats', statsCount.toString());
     }
 
@@ -50,7 +48,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 div.style.cssText = 'padding:0.6rem; background:rgba(255,255,255,0.03); border-radius:6px; font-size:0.65rem; cursor:pointer; margin-bottom:0.5rem;';
                 div.onclick = () => loadData(h);
                 const color = h.status === 'APROVADO' ? '#00ff88' : (h.status === 'NEGADO' ? '#ff4444' : '#ffa500');
-                div.innerHTML = `<div style="display:flex; justify-content:space-between"><span style="color:#fff; font-weight:600;">${h.name.split(' ')[0]}</span><span style="color:${color}; font-weight:800;">${h.score}</span></div><div style="color:var(--text-dim); font-size:0.6rem; margin-top:2px;">${h.vendaStatus || 'Em processo'}</div>`;
+                const vStatus = h.venda_status !== undefined ? h.venda_status : h.vendaStatus;
+                div.innerHTML = `<div style="display:flex; justify-content:space-between"><span style="color:#fff; font-weight:600;">${h.name.split(' ')[0]}</span><span style="color:${color}; font-weight:800;">${h.score}</span></div><div style="color:var(--text-dim); font-size:0.6rem; margin-top:2px;">${vStatus || 'Em processo'}</div>`;
                 list.appendChild(div);
             });
         }
@@ -61,17 +60,61 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!res) return;
         res.style.display = 'block';
         currentViewingCpf = data.cpf;
-        document.getElementById('clientName').innerText = data.name;
-        document.getElementById('scoreValue').innerText = data.score;
-        document.getElementById('scoreBar').style.width = `${data.score / 10}%`;
-        document.getElementById('creditValue').innerText = data.credit;
-        document.getElementById('restrictionsList').innerText = data.restriction;
-        document.getElementById('interestRate').innerText = data.interest;
-        document.getElementById('notesArea').value = data.notes || '';
+        
+        const nameEl = document.getElementById('clientName');
+        if (nameEl) nameEl.innerText = data.name;
+        
+        const birthDate = data.birth_date !== undefined ? data.birth_date : data.birthDate;
+        const birthEl = document.getElementById('clientBirthDate');
+        if (birthEl) birthEl.innerText = birthDate || 'N/A';
+        
+        const restrictionEl = document.getElementById('restrictionsList');
+        const restrictionCard = document.getElementById('restrictionCard');
+        if (restrictionEl) {
+            restrictionEl.innerText = data.restriction;
+            const hasRestriction = data.restriction && data.restriction.toUpperCase().includes('RESTRIÇÃO');
+            if (restrictionCard) {
+                if (hasRestriction) {
+                    restrictionCard.style.background = 'rgba(255, 68, 68, 0.07)';
+                    restrictionCard.style.borderColor = 'rgba(255, 68, 68, 0.3)';
+                    restrictionEl.style.color = '#ff4444';
+                } else {
+                    restrictionCard.style.background = 'rgba(0, 255, 136, 0.07)';
+                    restrictionCard.style.borderColor = 'rgba(0, 255, 136, 0.3)';
+                    restrictionEl.style.color = '#00ff88';
+                }
+            }
+        }
+        
+        const notesArea = document.getElementById('notesArea');
+        if (notesArea) notesArea.value = data.notes || '';
+        
+        const scoreEl = document.getElementById('scoreValue');
+        if (scoreEl) scoreEl.innerText = data.score;
+        
+        const scoreBarEl = document.getElementById('scoreBar');
+        if (scoreBarEl) scoreBarEl.style.width = `${data.score / 10}%`;
+        
+        const creditEl = document.getElementById('creditValue');
+        if (creditEl) {
+            const credit = data.credit_limit !== undefined ? data.credit_limit : data.credit;
+            creditEl.innerText = credit;
+        }
+        
+        const interestEl = document.getElementById('interestRate');
+        if (interestEl) {
+            const interest = data.interest_rate !== undefined ? data.interest_rate : data.interest;
+            interestEl.innerText = interest;
+        }
+        
         const badge = document.getElementById('statusBadge');
-        badge.innerText = data.status;
-        badge.style.color = data.status === 'APROVADO' ? '#00ff88' : (data.status === 'NEGADO' ? '#ff4444' : '#ffa500');
-        updateStatusButtons(data.vendaStatus || 'Em processo');
+        if (badge) {
+            badge.innerText = data.status;
+            badge.style.color = data.status === 'APROVADO' ? '#00ff88' : (data.status === 'NEGADO' ? '#ff4444' : '#ffa500');
+        }
+        
+        const vStatus = data.venda_status !== undefined ? data.venda_status : data.vendaStatus;
+        updateStatusButtons(vStatus || 'Em processo');
     }
 
     function updateStatusButtons(currentStatus) {
@@ -81,7 +124,25 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.style.color = isActive ? '#000' : '#fff';
             btn.onclick = () => {
                 const item = history.find(h => h.cpf === currentViewingCpf);
-                if (item) { item.vendaStatus = btn.getAttribute('data-status'); saveState(); updateStatusButtons(item.vendaStatus); updateSidebar(); }
+                if (item) {
+                    const newStatus = btn.getAttribute('data-status');
+                    item.venda_status = newStatus;
+                    item.vendaStatus = newStatus;
+                    saveState();
+                    updateStatusButtons(newStatus);
+                    updateSidebar();
+                    
+                    if (item.id) {
+                        fetch(`/consult/${item.id}`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ venda_status: newStatus })
+                        })
+                        .then(res => res.json())
+                        .then(updated => console.log('Venda status atualizado:', updated))
+                        .catch(err => console.error('Erro ao atualizar venda status:', err));
+                    }
+                }
             };
         });
     }
@@ -191,48 +252,80 @@ document.addEventListener('DOMContentLoaded', () => {
     const consultBtn = document.getElementById('consultBtn');
     const cpfInput = document.getElementById('cpf');
     if (consultBtn && cpfInput) {
+        // Format input mask 000.000.000-00
+        cpfInput.addEventListener('input', () => {
+            let v = cpfInput.value.replace(/\D/g, '');
+            if (v.length > 11) v = v.slice(0, 11);
+            if (v.length > 9) {
+                v = v.replace(/^(\d{3})(\d{3})(\d{3})(\d{1,2})$/, '$1.$2.$3-$4');
+            } else if (v.length > 6) {
+                v = v.replace(/^(\d{3})(\d{3})(\d{1,3})$/, '$1.$2.$3');
+            } else if (v.length > 3) {
+                v = v.replace(/^(\d{3})(\d{1,3})$/, '$1.$2');
+            }
+            cpfInput.value = v;
+        });
+
         consultBtn.addEventListener('click', () => {
             const rawCpf = cpfInput.value.replace(/\D/g, '');
             if (!isValidCPF(rawCpf)) {
-                cpfInput.style.borderColor = '#ff4444'; alert('CPF INVÁLIDO.'); return;
+                cpfInput.style.borderColor = '#ff4444';
+                alert('CPF INVÁLIDO.');
+                return;
             }
             cpfInput.style.borderColor = 'var(--primary)';
             document.getElementById('loading').style.display = 'block';
             document.getElementById('results').style.display = 'none';
             consultBtn.disabled = true;
 
-            setTimeout(() => {
-                const score = Math.floor(Math.random() * 1001);
-                const hasR = score < 450 || Math.random() > 0.8;
-                const status = (score > 650 && !hasR) ? 'APROVADO' : (score > 400 && !hasR ? 'EM ANÁLISE' : 'NEGADO');
-                const analysis = {
-                    date: new Date().toLocaleDateString('pt-BR'),
-                    cpf: cpfInput.value,
-                    name: ["Ricardo", "Ana", "Marcos", "Juliana", "Gabriel", "Fernanda", "Lucas", "Sophia"][Math.floor(Math.random()*8)] + " " + ["Silva", "Costa", "Pereira", "Lima"][Math.floor(Math.random()*4)],
-                    score: score, status: status, vendaStatus: 'Em processo',
-                    restriction: hasR ? "RESTRIÇÃO ATIVA" : "NADA CONSTA",
-                    credit: status === 'APROVADO' ? `R$ ${(Math.random()*1000000).toLocaleString('pt-BR')}` : 'SOB CONSULTA',
-                    interest: status === 'NEGADO' ? 'N/A' : '9.2% a.a.',
-                    notes: '', banks: [{name:'Caixa',rate:'8.5'},{name:'Itaú',rate:'9.7'}]
-                };
+            fetch('/consult', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cpf: rawCpf })
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('Erro na requisição ao servidor.');
+                return res.json();
+            })
+            .then(analysis => {
                 history.unshift(analysis);
-                auditLog.unshift(analysis); // PERSISTENT LOG
                 statsCount++;
                 saveState();
                 loadData(analysis);
                 updateSidebar();
+                
+                cpfInput.value = '';
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Erro ao consultar CPF no servidor: ' + err.message);
+            })
+            .finally(() => {
                 document.getElementById('loading').style.display = 'none';
                 consultBtn.disabled = false;
-                cpfInput.value = '';
-            }, 1000);
+            });
         });
     }
 
     const clearBtn = document.getElementById('clearHistoryBtn');
     if (clearBtn) {
         clearBtn.onclick = () => {
-            if (confirm('Limpar histórico visual? (O log de auditoria permanente será mantido)')) {
-                history = []; saveState(); updateSidebar(); document.getElementById('results').style.display = 'none';
+            if (confirm('Deseja limpar todos os registros? Isso também removerá as consultas do banco de dados.')) {
+                const deletePromises = history.filter(h => h.id).map(h => 
+                    fetch(`/consult/${h.id}`, { method: 'DELETE' }).catch(err => console.error(err))
+                );
+                Promise.all(deletePromises).then(() => {
+                    history = [];
+                    statsCount = 0;
+                    saveState();
+                    updateSidebar();
+                    document.getElementById('results').style.display = 'none';
+                    const fullTable = document.getElementById('fullHistoryTable');
+                    if (fullTable) fullTable.innerHTML = '';
+                    const emptyMsg = document.getElementById('emptyMessage');
+                    if (emptyMsg) emptyMsg.style.display = 'block';
+                    alert('Banco de dados local e histórico limpo com sucesso.');
+                });
             }
         };
     }
@@ -240,10 +333,78 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveNotesBtn = document.getElementById('saveNotesBtn');
     if (saveNotesBtn) {
         saveNotesBtn.onclick = () => {
+            const notesAreaValue = document.getElementById('notesArea').value;
             const item = history.find(h => h.cpf === currentViewingCpf);
-            if (item) { item.notes = document.getElementById('notesArea').value; saveState(); alert('Salvo!'); }
+            if (item) {
+                item.notes = notesAreaValue;
+                saveState();
+                
+                if (item.id) {
+                    fetch(`/consult/${item.id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ notes: notesAreaValue })
+                    })
+                    .then(res => res.json())
+                    .then(updated => alert('Anotação sincronizada no banco de dados!'))
+                    .catch(e => {
+                        console.error(e);
+                        alert('Erro ao sincronizar com servidor, salvo localmente.');
+                    });
+                } else {
+                    alert('Salvo localmente!');
+                }
+            }
         };
     }
 
-    updateSidebar();
+    // --- APP INITIALIZATION FROM BACKEND ---
+    function initApp() {
+        fetch('/history')
+        .then(res => res.json())
+        .then(data => {
+            history = data;
+            statsCount = history.length;
+            saveState();
+            
+            // Populate full history page table if exists
+            const fullTable = document.getElementById('fullHistoryTable');
+            const emptyMsg = document.getElementById('emptyMessage');
+            if (fullTable) {
+                fullTable.innerHTML = '';
+                if (history.length === 0) {
+                    if (emptyMsg) emptyMsg.style.display = 'block';
+                } else {
+                    if (emptyMsg) emptyMsg.style.display = 'none';
+                    history.forEach(h => {
+                        const tr = document.createElement('tr');
+                        tr.style.cssText = 'border-bottom: 1px solid var(--glass-border);';
+                        
+                        const dateStr = new Date(h.created_at || Date.now()).toLocaleDateString('pt-BR');
+                        const statusColor = h.status === 'APROVADO' ? '#00ff88' : (h.status === 'NEGADO' ? '#ff4444' : '#ffa500');
+                        const cpfFormatted = h.cpf.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4');
+                        
+                        tr.innerHTML = `
+                            <td style="padding: 1rem; color: var(--text-dim);">${dateStr}</td>
+                            <td style="padding: 1rem; color: #fff; font-weight: 600;">${h.name}</td>
+                            <td style="padding: 1rem; color: var(--text-dim);">${cpfFormatted}</td>
+                            <td style="padding: 1rem; color: var(--primary); font-weight: 800;">${h.score}</td>
+                            <td style="padding: 1rem;"><span style="color: ${statusColor}; font-weight: 800;">${h.status}</span></td>
+                        `;
+                        fullTable.appendChild(tr);
+                    });
+                }
+            }
+            
+            updateSidebar();
+        })
+        .catch(err => {
+            console.error('Erro de conexão ao backend, carregando dados locais:', err);
+            history = JSON.parse(localStorage.getItem('mundo_history')) || [];
+            statsCount = parseInt(localStorage.getItem('mundo_stats')) || history.length;
+            updateSidebar();
+        });
+    }
+
+    initApp();
 });
