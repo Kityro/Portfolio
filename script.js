@@ -406,5 +406,85 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- BATCH CONSULTATION DRAG AND DROP ---
+    const dropZone = document.getElementById('batchDropZone');
+    const fileInput = document.getElementById('batchFileInput');
+
+    if (dropZone && fileInput) {
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.background = 'rgba(0, 255, 136, 0.15)';
+            dropZone.style.borderColor = '#fff';
+        });
+
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dropZone.style.background = 'rgba(0, 255, 136, 0.05)';
+            dropZone.style.borderColor = 'var(--primary)';
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.background = 'rgba(0, 255, 136, 0.05)';
+            dropZone.style.borderColor = 'var(--primary)';
+            
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                handleBatchFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files.length > 0) {
+                handleBatchFile(e.target.files[0]);
+            }
+        });
+
+        function handleBatchFile(file) {
+            if (!file.name.endsWith('.txt') && !file.name.endsWith('.csv')) {
+                alert('Apenas arquivos .txt ou .csv são suportados para o lote de CPFs.');
+                return;
+            }
+            
+            dropZone.innerHTML = '⏳ Processando Lote...';
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            fetch('/consult/batch', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('Erro ao processar lote no servidor.');
+                return res.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `Resultado_Lote_${new Date().getTime()}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                
+                dropZone.innerHTML = '✅ Lote Concluído! Arraste mais';
+                setTimeout(() => {
+                    dropZone.innerHTML = '📂 Arraste CPFs (.txt/.csv) Aqui <input type="file" id="batchFileInput" accept=".txt,.csv" style="display: none;">';
+                }, 3000);
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Erro no lote: ' + err.message);
+                dropZone.innerHTML = '❌ Erro! Tente Novamente';
+                setTimeout(() => {
+                    dropZone.innerHTML = '📂 Arraste CPFs (.txt/.csv) Aqui <input type="file" id="batchFileInput" accept=".txt,.csv" style="display: none;">';
+                }, 3000);
+            });
+        }
+    }
+
     initApp();
 });

@@ -13,6 +13,19 @@ except ImportError:
 
 API_KEY = os.getenv("CPFHUB_API_KEY", "")
 
+def is_valid_cpf(cpf: str) -> bool:
+    cpf = ''.join(filter(str.isdigit, str(cpf)))
+    if len(cpf) != 11 or len(set(cpf)) == 1:
+        return False
+    
+    for i in range(9, 11):
+        value = sum((int(cpf[num]) * ((i + 1) - num) for num in range(0, i)))
+        digit = ((value * 10) % 11) % 10
+        if digit != int(cpf[i]):
+            return False
+    return True
+
+
 def perform_credit_analysis(cpf: str):
     """
     Performs credit analysis by fetching the real registration details (name and birth date)
@@ -75,6 +88,11 @@ def perform_credit_analysis(cpf: str):
         limit = "R$ 0,00"
         rate = "N/A"
         
+    # Generate deterministic debt
+    debt_amount = 0
+    if has_restriction:
+        debt_amount = random.randint(100, 5000)
+        
     return {
         "cpf": cpf,
         "name": real_name,
@@ -82,6 +100,7 @@ def perform_credit_analysis(cpf: str):
         "score": score,
         "status": status,
         "restriction": "RESTRIÇÃO ATIVA" if has_restriction else "NADA CONSTA",
+        "debt_amount": debt_amount,
         "credit_limit": limit,
         "interest_rate": rate,
         "venda_status": "Em processo"

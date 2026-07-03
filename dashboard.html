@@ -55,9 +55,16 @@
         <!-- MAIN CONTENT (RIGHT) -->
         <main style="display: flex; flex-direction: column; gap: 2rem;">
             <div>
-                <div class="logo-container" style="justify-content: flex-start; margin-bottom: 0.5rem;">
-                    <div class="logo-text">mundo</div>
-                    <div class="logo-plus">+</div>
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; gap: 1rem;">
+                    <div class="logo-container" style="margin-bottom: 0;">
+                        <div class="logo-text">mundo</div>
+                        <div class="logo-plus">+</div>
+                    </div>
+
+                    <div id="batchDropZone" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0 1rem; height: 38px; border: 1.5px dashed var(--primary); border-radius: 8px; background: rgba(0, 255, 136, 0.05); color: var(--text-dim); font-size: 0.65rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; white-space: nowrap;">
+                        📂 Arraste CPFs (.txt/.csv) Aqui
+                        <input type="file" id="batchFileInput" accept=".txt,.csv" style="display: none;">
+                    </div>
                 </div>
                 <h2 class="neon-text" style="font-size: 1.8rem; color: #fff;">SISTEMA DE GESTÃO</h2>
                 
