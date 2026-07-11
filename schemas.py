@@ -12,6 +12,9 @@ class ConsultationBase(BaseModel):
     restriction: str
     credit_limit: str
     interest_rate: str
+    debt_amount: Optional[int] = 0
+    debt_class: Optional[str] = ""
+    debt_location: Optional[str] = ""
     notes: Optional[str] = ""
 
 class ConsultationCreate(ConsultationBase):

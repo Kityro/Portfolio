@@ -15,5 +15,8 @@ class Consultation(Base):
     restriction = Column(String)  # NADA CONSTA, RESTRIÇÃO ATIVA
     credit_limit = Column(String)
     interest_rate = Column(String)
+    debt_amount = Column(Integer, nullable=True)
+    debt_class = Column(String, nullable=True)
+    debt_location = Column(String, nullable=True)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

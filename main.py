@@ -29,7 +29,9 @@ def read_root():
 @app.post("/consult", response_model=schemas.ConsultationResponse)
 def create_consultation(request: schemas.CPFRequest, db: Session = Depends(database.get_db)):
     analysis_data = services.perform_credit_analysis(request.cpf)
-    db_consultation = models.Consultation(**analysis_data)
+    model_columns = models.Consultation.__table__.columns.keys()
+    filtered_data = {k: v for k, v in analysis_data.items() if k in model_columns}
+    db_consultation = models.Consultation(**filtered_data)
     db.add(db_consultation)
     db.commit()
     db.refresh(db_consultation)
@@ -63,10 +65,11 @@ def delete_consultation(consult_id: int, db: Session = Depends(database.get_db))
     return {"message": "Deleted successfully"}
 
 @app.post("/consult/batch")
-async def batch_consultation(file: UploadFile = File(...)):
+async def batch_consultation(file: UploadFile = File(...), db: Session = Depends(database.get_db)):
     import io
     import openpyxl
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from datetime import datetime, timedelta
 
     content = await file.read()
     text = content.decode("utf-8", errors="replace")
@@ -88,7 +91,7 @@ async def batch_consultation(file: UploadFile = File(...)):
 
     # --- Cabeçalho ---
     headers = ["Nº", "CPF", "Nome", "Data de Nascimento",
-               "CPF Válido?", "Restrição no Nome?", "Valor da Dívida (R$)", "Classificação da Dívida"]
+               "CPF Válido?", "Restrição no Nome?", "Valor da Dívida (R$)", "Classificação da Dívida", "Local da Dívida"]
     ws.append(headers)
 
     for col_idx, _ in enumerate(headers, start=1):
@@ -99,7 +102,7 @@ async def batch_consultation(file: UploadFile = File(...)):
         cell.border    = cell_border
 
     # --- Larguras fixas por coluna (em caracteres) ---
-    col_widths = [6, 18, 38, 22, 14, 22, 22, 24]
+    col_widths = [6, 18, 38, 22, 14, 22, 22, 24, 24]
     for i, w in enumerate(col_widths, start=1):
         ws.column_dimensions[openpyxl.utils.get_column_letter(i)].width = w
 
@@ -120,22 +123,32 @@ async def batch_consultation(file: UploadFile = File(...)):
             cpf_fmt = cpf_clean
 
         if not is_valid:
-            row_data = [row_num, cpf_fmt, "—", "—", "NÃO", "—", "—", "CPF INVÁLIDO"]
+            row_data = [row_num, cpf_fmt, "—", "—", "NÃO", "—", "—", "CPF INVÁLIDO", "—"]
         else:
             a = services.perform_credit_analysis(cpf_clean)
+            # Store in database to record each request
+            model_columns = models.Consultation.__table__.columns.keys()
+            filtered_data = {k: v for k, v in a.items() if k in model_columns}
+            db_consultation = models.Consultation(**filtered_data)
+            db.add(db_consultation)
+            db.commit()
+            db.refresh(db_consultation)
+
             tem_restricao   = a.get("restriction") == "RESTRIÇÃO ATIVA"
             restricao_label = "SIM" if tem_restricao else "NÃO"
             debt_amount     = a.get("debt_amount", 0)
+            local_divida    = a.get("debt_location", "—")
 
             if tem_restricao:
                 debt_fmt      = f"R$ {debt_amount:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-                classificacao = "ACIMA DE MIL" if debt_amount > 1000 else "ABAIXO DE MIL"
+                classificacao = a.get("debt_class") or ("ACIMA DE MIL" if debt_amount > 1000 else "ABAIXO DE MIL")
             else:
                 debt_fmt      = "R$ 0,00"
                 classificacao = "SEM RESTRIÇÃO"
+                local_divida  = "NADA CONSTA"
 
             row_data = [row_num, cpf_fmt, a.get("name", "—"), a.get("birth_date", "—"),
-                        "SIM", restricao_label, debt_fmt, classificacao]
+                        "SIM", restricao_label, debt_fmt, classificacao, local_divida]
 
         ws.append(row_data)
         excel_row = row_num + 1  # +1 porque linha 1 é cabeçalho
@@ -144,7 +157,7 @@ async def batch_consultation(file: UploadFile = File(...)):
         fill = row_fill_alt if row_num % 2 == 0 else None
 
         # Alinhamento e borda por célula
-        alignments = [center, center, left, center, center, center, right, center]
+        alignments = [center, center, left, center, center, center, right, center, center]
         for col_idx, align in enumerate(alignments, start=1):
             cell = ws.cell(row=excel_row, column=col_idx)
             cell.alignment = align
@@ -170,8 +183,34 @@ async def batch_consultation(file: UploadFile = File(...)):
     )
 
 
+class SafeStaticFiles(StaticFiles):
+    async def get_response(self, path: str, scope):
+        allowed_root_files = {
+            "",
+            "index.html",
+            "dashboard.html",
+            "history.html",
+            "notes.html",
+            "style.css",
+            "script.js"
+        }
+        allowed_directories = ("css/", "js/", "instrucoes_api/")
+        
+        norm_path = path.replace("\\", "/").strip("/")
+        
+        is_allowed = (
+            norm_path in allowed_root_files or
+            any(norm_path.startswith(d_pref) for d_pref in allowed_directories)
+        )
+        
+        if not is_allowed:
+            from starlette.exceptions import HTTPException as StarletteHTTPException
+            raise StarletteHTTPException(status_code=404, detail="Not Found")
+            
+        return await super().get_response(path, scope)
+
 # Mount static files last
-app.mount("/", StaticFiles(directory=".", html=True), name="static")
+app.mount("/", SafeStaticFiles(directory=".", html=True), name="static")
 
 if __name__ == "__main__":
     import os

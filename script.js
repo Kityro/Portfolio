@@ -86,6 +86,30 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
+        const debtAmountEl = document.getElementById('clientDebtAmount');
+        if (debtAmountEl) {
+            const hasRestriction = data.restriction && data.restriction.toUpperCase().includes('RESTRIÇÃO');
+            const debtAmount = hasRestriction ? (data.debt_amount || 0) : 0;
+            debtAmountEl.innerText = 'R$ ' + debtAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            debtAmountEl.style.color = hasRestriction ? '#ff4444' : '#00ff88';
+        }
+
+        const debtClassEl = document.getElementById('clientDebtClass');
+        if (debtClassEl) {
+            const hasRestriction = data.restriction && data.restriction.toUpperCase().includes('RESTRIÇÃO');
+            const debtClass = hasRestriction ? (data.debt_class || 'SEM RESTRIÇÃO') : 'SEM RESTRIÇÃO';
+            debtClassEl.innerText = debtClass;
+            debtClassEl.style.color = hasRestriction ? '#ff4444' : '#00ff88';
+        }
+
+        const debtLocationEl = document.getElementById('clientDebtLocation');
+        if (debtLocationEl) {
+            const hasRestriction = data.restriction && data.restriction.toUpperCase().includes('RESTRIÇÃO');
+            const debtLocation = hasRestriction ? (data.debt_location || 'NADA CONSTA') : 'NADA CONSTA';
+            debtLocationEl.innerText = debtLocation;
+            debtLocationEl.style.color = hasRestriction ? '#ff4444' : '#00ff88';
+        }
+        
         const notesArea = document.getElementById('notesArea');
         if (notesArea) notesArea.value = data.notes || '';
         

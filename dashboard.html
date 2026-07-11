@@ -22,7 +22,7 @@
         <div id="canvas-container"></div>
     </div>
 
-    <div class="glass-card" style="max-width: 1200px; width: 95%; display: grid; grid-template-columns: 280px 1fr; gap: 2rem; text-align: left; align-items: start; padding: 2rem; margin: 8rem 0 4rem 0;">
+    <div class="glass-card dashboard-card" style="max-width: 1200px; width: 95%; text-align: left; align-items: start; padding: 2rem; margin: 8rem 0 4rem 0;">
         <!-- SIDEBAR (LEFT) -->
         <aside style="border-right: 1px solid var(--glass-border); padding-right: 2rem; height: 100%; display: flex; flex-direction: column; gap: 2rem;">
             <!-- Perfil do Corretor -->
@@ -83,7 +83,7 @@
                         <h3 style="color: var(--primary); margin:0; font-size: 1.3rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem; text-transform: uppercase;">Resultado da Consulta</h3>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div class="results-grid" style="display: grid; gap: 1rem; margin-bottom: 1.5rem;">
                         <div style="background: rgba(255, 255, 255, 0.05); padding: 1rem; border-radius: 12px; border: 1px solid var(--glass-border);">
                             <h4 style="font-size: 0.65rem; color: var(--text-dim); margin-bottom: 0.4rem; text-transform: uppercase;">Nome Completo</h4>
                             <div id="clientName" style="font-size: 1.1rem; font-weight: 700; color: #fff;"></div>
@@ -95,6 +95,18 @@
                         <div id="restrictionCard" style="padding: 1rem; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);">
                             <h4 style="font-size: 0.65rem; color: var(--text-dim); margin-bottom: 0.4rem; text-transform: uppercase;">Restrição no Nome</h4>
                             <div id="restrictionsList" style="font-size: 1.1rem; font-weight: 800; color: #fff;"></div>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.05); padding: 1rem; border-radius: 12px; border: 1px solid var(--glass-border);">
+                            <h4 style="font-size: 0.65rem; color: var(--text-dim); margin-bottom: 0.4rem; text-transform: uppercase;">Valor da Dívida</h4>
+                            <div id="clientDebtAmount" style="font-size: 1.1rem; font-weight: 700; color: #fff;"></div>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.05); padding: 1rem; border-radius: 12px; border: 1px solid var(--glass-border);">
+                            <h4 style="font-size: 0.65rem; color: var(--text-dim); margin-bottom: 0.4rem; text-transform: uppercase;">Classificação da Dívida</h4>
+                            <div id="clientDebtClass" style="font-size: 1.1rem; font-weight: 700; color: #fff;"></div>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.05); padding: 1rem; border-radius: 12px; border: 1px solid var(--glass-border);">
+                            <h4 style="font-size: 0.65rem; color: var(--text-dim); margin-bottom: 0.4rem; text-transform: uppercase;">Local da Dívida</h4>
+                            <div id="clientDebtLocation" style="font-size: 1.1rem; font-weight: 700; color: #fff;"></div>
                         </div>
                     </div>
 

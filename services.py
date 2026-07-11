@@ -90,8 +90,13 @@ def perform_credit_analysis(cpf: str):
         
     # Generate deterministic debt
     debt_amount = 0
+    debt_class = "SEM RESTRIÇÃO"
+    debt_location = "NADA CONSTA"
     if has_restriction:
         debt_amount = random.randint(100, 5000)
+        debt_class = "ACIMA DE MIL" if debt_amount > 1000 else "ABAIXO DE MIL"
+        locations = ["SERASA", "SPC BRASIL", "CENTRAL DE PROTESTOS", "BANCO ITAÚ", "CAIXA ECONÔMICA", "BANCO SANTANDER"]
+        debt_location = random.choice(locations)
         
     return {
         "cpf": cpf,
@@ -101,6 +106,8 @@ def perform_credit_analysis(cpf: str):
         "status": status,
         "restriction": "RESTRIÇÃO ATIVA" if has_restriction else "NADA CONSTA",
         "debt_amount": debt_amount,
+        "debt_class": debt_class,
+        "debt_location": debt_location,
         "credit_limit": limit,
         "interest_rate": rate,
         "venda_status": "Em processo"
