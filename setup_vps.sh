@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script de Configuração Automatizada da VPS para FastAPI Mundo+
+# Script de Configuração Automatizada da VPS para FastAPI Portfólio Otávio
 # Funciona em Ubuntu 20.04/22.04/24.04 e Debian
 
 # Garantir que o script seja executado como root
@@ -10,7 +10,7 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 echo "========================================="
-echo "  Iniciando Configuração do Mundo+ VPS   "
+echo "  Iniciando Configuração do Portfólio VPS   "
 echo "========================================="
 
 # 1. Atualizar Pacotes do Sistema
@@ -25,7 +25,7 @@ ufw allow 'Nginx Full'
 echo "y" | ufw enable
 
 # 3. Criar pasta e configurar permissões se necessário
-WORKDIR="/var/www/projeto-mundo"
+WORKDIR="/var/www/portfolio-otavio"
 echo "--> Configurando diretório de trabalho em $WORKDIR..."
 mkdir -p $WORKDIR
 # Copiar arquivos do build de onde o script rodar para o diretório de destino
@@ -53,9 +53,9 @@ fi
 
 # 6. Criar serviço no Systemd (para rodar a aplicação em segundo plano)
 echo "--> Criando serviço em segundo plano (Systemd)..."
-cat <<EOT > /etc/systemd/system/mundo-mais.service
+cat <<EOT > /etc/systemd/system/portfolio.service
 [Unit]
-Description=FastAPI Mundo Mais Application
+Description=FastAPI Portfólio Otávio Application
 After=network.target
 
 [Service]
@@ -71,12 +71,12 @@ EOT
 
 # Reiniciar e ativar o serviço
 systemctl daemon-reload
-systemctl enable mundo-mais
-systemctl restart mundo-mais
+systemctl enable portfolio
+systemctl restart portfolio
 
 # 7. Configurar Nginx como Proxy Reverso
 echo "--> Configurando servidor web Nginx..."
-cat <<EOT > /etc/nginx/sites-available/mundo-mais
+cat <<EOT > /etc/nginx/sites-available/portfolio
 server {
     listen 80;
     server_name localhost; # Pode alterar depois para seu domínio (ex: seusite.com)
@@ -98,7 +98,7 @@ if [ -f /etc/nginx/sites-enabled/default ]; then
   rm /etc/nginx/sites-enabled/default
 fi
 
-ln -sf /etc/nginx/sites-available/mundo-mais /etc/nginx/sites-enabled/
+ln -sf /etc/nginx/sites-available/portfolio /etc/nginx/sites-enabled/
 nginx -t && systemctl restart nginx
 
 echo "========================================="

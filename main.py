@@ -11,7 +11,7 @@ import uvicorn
 # Initialize Database
 models.Base.metadata.create_all(bind=database.engine)
 
-app = FastAPI(title="Mundo+ API", description="Backend para Consulta de CPF e Crédito")
+app = FastAPI(title="Portfólio Otávio", description="Backend para Consulta de CPF e Crédito")
 
 # Configure CORS
 app.add_middleware(
