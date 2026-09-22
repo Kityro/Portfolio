@@ -2,6 +2,8 @@
 
 **Feito com IA, Lógica de programação, Boas Práticas e Automação de Desenvolvimento.**
 
+🔗 **Live Demo / Demonstração ao vivo:** [Link do seu deploy na VPS aqui]
+
 Portal de gestão para consulta de dados cadastrais via CPF, exibindo nome completo, data de nascimento e situação de restrições no nome do cliente.
 
 ## Tecnologias
@@ -18,8 +20,8 @@ Portal de gestão para consulta de dados cadastrais via CPF, exibindo nome compl
 
 ### 2. Clone o repositório
 ```bash
-git clone https://github.com/seu-usuario/projeto-mundo-mais.git
-cd projeto-mundo-mais
+git clone https://github.com/Kityro/Portfolio.git
+cd Portfolio
 ```
 
 ### 3. Instale as dependências
@@ -42,7 +44,7 @@ Abra esse endereço no navegador para acessar o sistema.
 ## Estrutura do Projeto
 
 ```
-projeto-mundo-mais/
+Portfolio/
 ├── main.py          # FastAPI - rotas da API
 ├── services.py      # Lógica de consulta CPFhub
 ├── models.py        # Modelos do banco de dados
