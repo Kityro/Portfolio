@@ -26,13 +26,256 @@ def is_valid_cpf(cpf: str) -> bool:
     return True
 
 
+def get_serasa_token() -> str:
+    """
+    Obtém o token OAuth 2.0 da Serasa Experian.
+    Suporta Client Credentials (Basic Auth no header) de forma segura.
+    """
+    client_id = os.getenv("SERASA_CLIENT_ID", "").strip()
+    client_secret = os.getenv("SERASA_CLIENT_SECRET", "").strip()
+    auth_url = os.getenv("SERASA_AUTH_URL", "https://api.serasaexperian.com.br/security/iam/v1/user-identities").strip()
+    
+    if not client_id or not client_secret:
+        return None
+        
+    try:
+        import base64
+        # Codifica client ID e Secret no formato Basic Auth para o header
+        credentials = f"{client_id}:{client_secret}"
+        encoded_creds = base64.b64encode(credentials.encode("utf-8")).decode("utf-8")
+        
+        # Envia como application/x-www-form-urlencoded
+        data = b"grant_type=client_credentials"
+        
+        req = urllib.request.Request(
+            auth_url,
+            data=data,
+            headers={
+                "Authorization": f"Basic {encoded_creds}",
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Accept": "application/json"
+            },
+            method="POST"
+        )
+        
+        with urllib.request.urlopen(req, timeout=10) as response:
+            res_data = json.loads(response.read().decode("utf-8"))
+            # Trata múltiplos retornos possíveis (accessToken ou access_token)
+            return res_data.get("accessToken") or res_data.get("access_token")
+    except Exception as e:
+        print(f"Erro de Autenticação Serasa: {e}")
+        return None
+
+
+def query_serasa_relatorio_pf(clean_cpf: str, token: str) -> dict:
+    """
+    Realiza a requisição ao produto Relatório Avançado PF da Serasa Experian.
+    """
+    api_url = os.getenv("SERASA_API_URL", "https://api.serasaexperian.com.br/rfe/v1/relatorio-avancado-pf").strip()
+    
+    # Payload padrão flexível recomendado para a API REST da Serasa PF
+    payload = {
+        "document": clean_cpf,
+        "documentType": "CPF"
+    }
+    
+    try:
+        req = urllib.request.Request(
+            api_url,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            method="POST"
+        )
+        
+        with urllib.request.urlopen(req, timeout=10) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except Exception as e:
+        print(f"Erro na consulta à API Serasa Relatório PF: {e}")
+        return None
+
+
+def parse_serasa_response(res: dict) -> dict:
+    """
+    Filtra e formata a resposta técnica da Serasa Experian
+    para o formato compatível com o banco e o Front-end.
+    """
+    if not res:
+        return None
+        
+    # Extrai o nome de possíveis caminhos estruturais (visando compatibilidade)
+    name = (
+        res.get("nome") or 
+        res.get("nomePessoaFisica") or 
+        res.get("nome_completo") or
+        res.get("dados_cadastrais", {}).get("nome") or
+        res.get("identificacao", {}).get("nome")
+    )
+    
+    # Extrai data de nascimento
+    birth_date = (
+        res.get("dataNascimento") or 
+        res.get("data_nascimento") or 
+        res.get("dados_cadastrais", {}).get("data_nascimento") or
+        res.get("identificacao", {}).get("data_nascimento") or
+        res.get("dados_cadastrais", {}).get("nascimento")
+    )
+    
+    # Extrai pontuação de Score
+    score = 0
+    score_val = (
+        res.get("score") or 
+        res.get("scoreCredito") or 
+        res.get("score_credito") or
+        res.get("dados_score", {}).get("valor") or
+        res.get("dados_score", {}).get("pontuacao")
+    )
+    if isinstance(score_val, dict):
+        score = score_val.get("valor") or score_val.get("pontuacao") or 0
+    elif score_val is not None:
+        try:
+            score = int(score_val)
+        except ValueError:
+            pass
+            
+    # Extrai dívidas/restrições (Pefin, Protestos, Cheques, etc.)
+    debt_amount = 0.0
+    has_restriction = False
+    creditors = []
+    
+    # 1. Total direto se fornecido pela Serasa
+    total_db = res.get("valor_total_pendencias") or res.get("valorTotalPendencias") or res.get("total_dividas")
+    if total_db:
+        try:
+            debt_amount = float(total_db)
+        except ValueError:
+            pass
+            
+    # 2. Varreduras em arrays comuns de anotações
+    # PEFIN / REFIN
+    pefin = res.get("pefin") or res.get("pendencias_financeiras") or res.get("refin")
+    if isinstance(pefin, list):
+        for item in pefin:
+            val = item.get("valor") or item.get("valor_pendencia") or 0
+            try:
+                debt_amount += float(val)
+            except ValueError:
+                pass
+            creditor = item.get("credor") or item.get("nome_credor") or item.get("origem")
+            if creditor:
+                creditors.append(creditor)
+                
+    # Protestos em Cartórios
+    protests = res.get("protestos")
+    if isinstance(protests, list):
+        for item in protests:
+            val = item.get("valor") or 0
+            try:
+                debt_amount += float(val)
+            except ValueError:
+                pass
+            cartorio = item.get("cartorio") or item.get("origem") or "Cartório de Protestos"
+            if cartorio:
+                creditors.append(cartorio)
+                
+    # Valida restrição
+    if debt_amount > 0 or len(creditors) > 0 or res.get("indicador_restricao") or res.get("tem_restricao"):
+        has_restriction = True
+        
+    debt_location = "NADA CONSTA"
+    if len(creditors) > 0:
+        debt_location = ", ".join(list(dict.fromkeys(creditors))[:2]) # Remove duplicados e limita em 2
+        
+    return {
+        "name": name,
+        "birth_date": birth_date,
+        "score": score,
+        "debt_amount": int(debt_amount),
+        "has_restriction": has_restriction,
+        "debt_location": debt_location
+    }
+
+
 def perform_credit_analysis(cpf: str):
     """
-    Performs credit analysis by fetching the real registration details (name and birth date)
-    from CPFhub, and then deterministically simulating the credit score and restriction data.
+    Performs credit analysis by trying to query Serasa Experian Advanced Report API first.
+    If Serasa credentials are missing or call fails, falls back gracefully to CPFhub API
+    and deterministic mock values.
     """
     clean_cpf = "".join(filter(str.isdigit, cpf))
     
+    # 1. Tenta consulta ao Serasa Experian
+    client_id = os.getenv("SERASA_CLIENT_ID", "").strip()
+    client_secret = os.getenv("SERASA_CLIENT_SECRET", "").strip()
+    
+    if client_id and client_secret:
+        print("[Serasa API] Credenciais detectadas. Iniciando consulta real...")
+        token = get_serasa_token()
+        if token:
+            serasa_res = query_serasa_relatorio_pf(clean_cpf, token)
+            parsed_data = parse_serasa_response(serasa_res)
+            if parsed_data and parsed_data.get("name"):
+                print("[Serasa API] Consulta realizada com sucesso!")
+                
+                # Adapta status e limites com base nos dados obtidos da Serasa
+                score = parsed_data.get("score", 700)
+                has_restriction = parsed_data.get("has_restriction", False)
+                
+                if score > 750 and not has_restriction:
+                    status = "APROVADO"
+                    # Determina um limite proporcional ao score
+                    limit_rnd = score * 50
+                    limit = f"R$ {limit_rnd:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                    rate = "9.2% a.a."
+                elif score > 500 and not has_restriction:
+                    status = "EM ANÁLISE"
+                    limit = "SOB CONSULTA"
+                    rate = "11.8% a.a."
+                else:
+                    status = "NEGADO"
+                    limit = "R$ 0,00"
+                    rate = "N/A"
+                    
+                debt_amt = parsed_data.get("debt_amount", 0)
+                debt_class = "SEM RESTRIÇÃO"
+                if has_restriction:
+                    debt_class = "ACIMA DE MIL" if debt_amt > 1000 else "ABAIXO DE MIL"
+                
+                # Suporta formatação de data
+                birth_date = parsed_data.get("birth_date")
+                if birth_date and len(birth_date) >= 10:
+                    # Garantir formato DD/MM/AAAA se retornado no formato AAAA-MM-DD
+                    if "-" in birth_date:
+                        try:
+                            parts = birth_date.split("T")[0].split("-")
+                            birth_date = f"{parts[2]}/{parts[1]}/{parts[0]}"
+                        except:
+                            pass
+                
+                return {
+                    "cpf": cpf,
+                    "name": parsed_data.get("name"),
+                    "birth_date": birth_date,
+                    "score": score,
+                    "status": status,
+                    "restriction": "RESTRIÇÃO ATIVA" if has_restriction else "NADA CONSTA",
+                    "debt_amount": debt_amt,
+                    "debt_class": debt_class,
+                    "debt_location": parsed_data.get("debt_location") or "NADA CONSTA",
+                    "credit_limit": limit,
+                    "interest_rate": rate,
+                    "venda_status": "Em processo"
+                }
+            else:
+                print("[Serasa API] Dados não puderam ser extraídos ou vazios. Iniciando fallback...")
+        else:
+            print("[Serasa API] Falha ao obter token OAuth 2.0. Iniciando fallback...")
+    
+    # FALLBACK ATIVO: CPFhub + Simulador (atual comportamento do sistema)
+    print("[Fallback API] Usando dados CPFhub e simulação local.")
     real_name = None
     birth_date = None
     
@@ -112,3 +355,4 @@ def perform_credit_analysis(cpf: str):
         "interest_rate": rate,
         "venda_status": "Em processo"
     }
+

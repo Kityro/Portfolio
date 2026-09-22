@@ -1,4 +1,6 @@
-# Mundo+ | Sistema de Gestão e Consulta de CPF
+# Portfólio Otávio | Sistema de Gestão de Crédito
+
+**Feito com IA, Lógica de programação, Boas Práticas e Automação de Desenvolvimento.**
 
 Portal de gestão para consulta de dados cadastrais via CPF, exibindo nome completo, data de nascimento e situação de restrições no nome do cliente.
 
